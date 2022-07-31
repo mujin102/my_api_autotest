@@ -1,5 +1,6 @@
 package org.dai.utils;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
@@ -34,7 +35,7 @@ public class HttpUtils {
     private static CookieStore cookieStore;
     private static String ContentType_Application_Json ="application/json";
     private static String ContentType_Text_Json ="text/json";
-    private static ResponseHandler<CloseableHttpResponse> responseHandler; //响应处理器，内部自动关闭流
+    private static ResponseHandler<String> responseHandler; //响应处理器，内部自动关闭流
 
     private static class HttpUtilsHolder{
         private static final HttpUtils INSTANCE = new HttpUtils();
@@ -151,8 +152,8 @@ public class HttpUtils {
         }
         try{
             response = httpClient.execute(httpPost);
-            res = EntityUtils.toString(response.getEntity());
-            return  res;
+            res = EntityUtils.toString(response.getEntity());// 取返回结果的消息体并转换为String类型返回
+            return res;
         }catch (Exception e){
             e.printStackTrace();
             throw e;
@@ -177,10 +178,9 @@ public class HttpUtils {
         }
         // 执行post请求
         try{
-            response = httpClient.execute(httpPost,responseHandler);
+            res = httpClient.execute(httpPost,responseHandler);
+            return  res;
             // 此处使用了响应处理器，所以后面不用再手动显式的关闭连接
-            res = EntityUtils.toString(response.getEntity()); // 取返回结果的消息体并转换为String类型返回
-            return res;
         }catch (Exception e){
             e.printStackTrace();
             throw e;
@@ -194,9 +194,18 @@ public class HttpUtils {
 
 
 }
+/* HttpClient API 在org.apache.http.client 包中提供了一个称为ResponseHandler的接口，为了创建一个响应处理器
+   使用方法：实现这个接口，并重写他的handleResponse()方法
+   handleResponse()方法的入参是HttpResponse 对象，方法体内定义对HttpResponse对象的处理，并返回处理后的结果
+ */
 
 class MyResponseHandler implements ResponseHandler{
-    public CloseableHttpResponse handleResponse(HttpResponse httpResponse) throws ClientProtocolException, IOException {
-        return null;
+    public String handleResponse(HttpResponse httpResponse) throws ClientProtocolException, IOException {
+        HttpEntity entity = httpResponse.getEntity();
+        if (entity == null){
+            return "";
+        }else{
+            return EntityUtils.toString(entity);
+        }
     }
 }
